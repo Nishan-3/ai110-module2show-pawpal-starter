@@ -1,28 +1,29 @@
-# PawPal+ (Module 2 Project)
+# 🐾 PawPal+
 
-You are building **PawPal+**, a Streamlit app that helps a pet owner plan care tasks for their pet.
+**PawPal+** is a Streamlit app that helps a busy pet owner plan daily care tasks across multiple pets — automatically sorted, scheduled, and explained.
 
-## Scenario
+---
 
-A busy pet owner needs help staying consistent with pet care. They want an assistant that can:
+## 📸 Demo
 
-- Track pet care tasks (walks, feeding, meds, enrichment, grooming, etc.)
-- Consider constraints (time available, priority, owner preferences)
-- Produce a daily plan and explain why it chose that plan
+<a href="/course_images/ai110/pawpal_screenshot.png" target="_blank"><img src='/course_images/ai110/pawpal_screenshot.png' title='PawPal App' width='' alt='PawPal App' class='center-block' /></a>
 
-Your job is to design the system first (UML), then implement the logic in Python, then connect it to the Streamlit UI.
+---
 
-## What you will build
+## Features
 
-Your final app should:
+- **Multi-pet support** — register multiple pets (dog, cat, or other) under one owner; tasks are tracked per pet and aggregated for scheduling
+- **Priority-based sorting** — tasks are sorted high → medium → low before scheduling; within the same priority, shorter tasks are scheduled first to fit more into the day
+- **Time-budget scheduling** — the owner sets a daily time budget (in minutes); the scheduler fits as many tasks as possible without exceeding it and explains what was skipped and why
+- **Start-time display** — each scheduled task is assigned a real clock time (08:00, 08:30…) so the owner sees an actual timetable, not just a list
+- **Task frequency** — tasks are tagged `daily`, `weekly`, or `as-needed`; `as-needed` tasks are excluded from automatic scheduling and shown separately; `daily` tasks can be reset for the next day
+- **Conflict warnings** — before generating a plan, the scheduler checks for duplicate task names across pets and tasks that can never fit the time budget, surfacing actionable warnings in the UI
+- **Filtering** — tasks can be filtered by pet or completion status, making it easy to see only what's relevant
+- **Reasoning** — every scheduled and skipped task includes a plain-language explanation of why it was included or left out
 
-- Let a user enter basic owner + pet info
-- Let a user add/edit tasks (duration + priority at minimum)
-- Generate a daily schedule/plan based on constraints and priorities
-- Display the plan clearly (and ideally explain the reasoning)
-- Include tests for the most important scheduling behaviors
+---
 
-## Getting started
+## Getting Started
 
 ### Setup
 
@@ -32,19 +33,21 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### Suggested workflow
+### Run the app
 
-1. Read the scenario carefully and identify requirements and edge cases.
-2. Draft a UML diagram (classes, attributes, methods, relationships).
-3. Convert UML into Python class stubs (no logic yet).
-4. Implement scheduling logic in small increments.
-5. Add tests to verify key behaviors.
-6. Connect your logic to the Streamlit UI in `app.py`.
-7. Refine UML so it matches what you actually built.
+```bash
+streamlit run app.py
+```
+
+### Run the terminal demo
+
+```bash
+python main.py
+```
+
+---
 
 ## Testing PawPal+
-
-Run the test suite with:
 
 ```bash
 python -m pytest
@@ -59,7 +62,7 @@ python -m pytest
 
 ★★★☆☆ (3/5)
 
-The core data operations (adding tasks, marking completion) are verified and reliable. Confidence is limited because the scheduling algorithm itself — priority sorting, time-budget fitting, conflict detection, and recurring task reset — has no tests yet. Edge cases like zero available time, all tasks skipped, or duplicate pet names are untested.
+Core data operations are verified and reliable. Confidence is limited because the scheduling algorithm — priority sorting, time-budget fitting, conflict detection, and recurring task reset — has no automated tests yet.
 
 ---
 
@@ -67,7 +70,17 @@ The core data operations (adding tasks, marking completion) are verified and rel
 
 The scheduler goes beyond a simple priority sort with four improvements:
 
-- **Start-time tracking** — each scheduled task is assigned a real clock time (e.g. 08:00, 08:30) based on a configurable day start. `Plan.display()` shows the full timetable.
-- **Filtering** — tasks can be filtered by pet name (`Owner.get_tasks_for_pet()`) or completion status (`Owner.get_tasks_by_status()`, `Pet.filter_tasks()`), making it easy to view just what's relevant.
-- **Recurring task support** — tasks carry a `frequency` field (`daily`, `weekly`, `as-needed`). `as-needed` tasks are excluded from automatic scheduling. `Scheduler.reset_daily_tasks()` resets daily tasks at the start of each new day so they appear again tomorrow.
-- **Conflict detection** — `Scheduler.detect_conflicts()` runs before scheduling and flags duplicate task titles across pets and tasks whose duration exceeds the owner's entire time budget (tasks that could never be scheduled).
+- **Start-time tracking** — each scheduled task is assigned a real clock time based on a configurable day start. `Plan.display()` shows the full timetable.
+- **Filtering** — tasks can be filtered by pet name (`Owner.get_tasks_for_pet()`) or completion status (`Owner.get_tasks_by_status()`, `Pet.filter_tasks()`).
+- **Recurring task support** — tasks carry a `frequency` field (`daily`, `weekly`, `as-needed`). `as-needed` tasks are excluded from auto-scheduling. `Scheduler.reset_daily_tasks()` resets daily tasks for the next day.
+- **Conflict detection** — `Scheduler.detect_conflicts()` runs before scheduling and flags duplicate task titles and tasks that can never fit the time budget.
+
+---
+
+## Scenario
+
+A busy pet owner needs help staying consistent with pet care. They want an assistant that can:
+
+- Track pet care tasks (walks, feeding, meds, enrichment, grooming, etc.)
+- Consider constraints (time available, priority, owner preferences)
+- Produce a daily plan and explain why it chose that plan
