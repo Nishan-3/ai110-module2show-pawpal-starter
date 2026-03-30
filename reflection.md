@@ -29,3 +29,63 @@ The original `Scheduler.__init__` accepted its own `tasks: list[Task]` parameter
 The original `Plan` only stored `scheduled_tasks` and `skipped_tasks`. `explain()` would have had no way to communicate *why* a task was chosen or skipped — just that it was.
 
 *Fix:* Added a `reasons: dict[str, str]` field to `Plan`. The scheduler will populate this when building the plan (e.g., `"Morning walk": "high priority, fits in time budget"`), giving `explain()` real content to work with.
+
+---
+
+## 2. AI Collaboration
+
+### 2a. How I used AI
+
+AI (Claude via Claude Code) was used throughout the project as a design reviewer and code generator. Specific uses:
+
+- **UML review** — asked AI to review the class skeleton for missing relationships and logic bottlenecks. It caught two real problems: duplicate task ownership between `Owner` and `Scheduler`, and `Plan.explain()` having no data to work with.
+- **Algorithm suggestions** — used AI to identify weaknesses in the initial greedy scheduler (no start times, unused `frequency` field, no conflict detection) and to suggest what improvements would be most useful for a real pet owner.
+- **Docstring generation** — used the "Generate documentation" smart action to add 1-line docstrings to all methods.
+- **Streamlit wiring** — AI helped connect backend Scheduler methods to the UI, including surfacing conflict warnings before schedule generation.
+
+### 2b. What I changed based on AI feedback
+
+| AI suggestion | Accepted? | Reason |
+|---|---|---|
+| Remove `tasks` from `Scheduler.__init__` | Yes | Eliminated a sync bug — owner is now the single source of truth |
+| Add `reasons` dict to `Plan` | Yes | Without it, `explain()` had nothing to say |
+| Add `start_times` to `Plan` | Yes | Pet owners need clock times, not just task order |
+| Add `detect_conflicts()` to `Scheduler` | Yes | Proactively warning > silently skipping tasks |
+| Use `as-needed` frequency to exclude vet tasks | Yes | Made sense — some tasks shouldn't auto-schedule |
+
+---
+
+## 3. Testing
+
+### 3a. What I tested
+
+- `test_mark_complete_changes_status` — verifies the state transition from pending to done
+- `test_add_task_increases_pet_task_count` — verifies pet task list grows correctly
+
+### 3b. What I would test next
+
+The scheduling algorithm itself has no tests yet. If I were to add more:
+
+- **Scheduler fills time budget exactly** — a task that fits exactly should be scheduled, not skipped
+- **Scheduler skips tasks that exceed remaining time** — even high-priority tasks should be skipped if they don't fit
+- **`reset_daily_tasks()` only resets daily tasks** — weekly and as-needed tasks should stay completed
+- **`detect_conflicts()` catches duplicate titles** — two pets with the same task name should trigger a warning
+
+---
+
+## 4. Reflection
+
+### What went well
+
+The separation of `Scheduler` from `Owner` and `Pet` made the logic easy to test and reason about. Generating the `Plan` as its own object (rather than printing directly) made it straightforward to display in both the terminal demo and the Streamlit UI without duplicating logic.
+
+### What was harder than expected
+
+`st.session_state` required a mental shift — Streamlit's stateless rerun model means objects get recreated unless explicitly stored. Understanding the "check before create" pattern (`if "owner" not in st.session_state`) was the key unlock for making the UI work correctly.
+
+### What I would improve with more time
+
+- Add tests for the scheduler algorithm
+- Let the owner set a preferred start time (currently hardcoded to 8:00 AM)
+- Support editing or removing tasks after they are added
+- Add a "new day" button in the UI that calls `reset_daily_tasks()`
