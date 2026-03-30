@@ -2,70 +2,30 @@
 
 ## 1. System Design
 
-**a. Initial design**
+### 1a. Initial Design
 
-- Briefly describe your initial UML design.
-- What classes did you include, and what responsibilities did you assign to each?
+The system is built around five classes:
 
-**b. Design changes**
+**`Pet`** — A dataclass representing the animal being cared for. Holds basic info (`name`, `species`, `age`) and a `special_needs` list for any health or behavioral considerations. It is a pure data container with no behavior.
 
-- Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+**`Task`** — A dataclass representing a single care activity. Stores `title`, `duration_minutes`, `priority` ("low", "medium", "high"), and `completed` status. Has one behavior method: `is_high_priority()`, which encapsulates the priority check so callers don't compare strings directly.
 
----
+**`Owner`** — Represents the person using the app. Holds `name`, `available_minutes` (the time budget for the day), and `preferences`. Also manages the task list via `add_task()` and `get_tasks()`. Tasks live on the Owner because they belong to the owner's routine, not to the scheduling algorithm.
 
-## 2. Scheduling Logic and Tradeoffs
+**`Scheduler`** — The core logic class. Takes an `Owner` and a `Pet` and uses them to produce a `Plan`. `prioritize()` sorts tasks by priority, and `generate_plan()` selects and orders tasks that fit within the owner's time budget.
 
-**a. Constraints and priorities**
+**`Plan`** — The output of the Scheduler. Holds `scheduled_tasks`, `skipped_tasks`, `total_minutes`, and a `reasons` dict mapping each task title to a short explanation of why it was included or skipped. `explain()` formats this for display; `display()` shows the full schedule.
 
-- What constraints does your scheduler consider (for example: time, priority, preferences)?
-- How did you decide which constraints mattered most?
+### 1b. Design Changes
 
-**b. Tradeoffs**
+After reviewing the skeleton, two problems were found and fixed:
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+**1. Duplicate task ownership between `Owner` and `Scheduler`.**
+The original `Scheduler.__init__` accepted its own `tasks: list[Task]` parameter separately from the `Owner`. This meant tasks added to the owner via `add_task()` would not automatically be seen by the scheduler — the caller would have to pass them in manually and keep both in sync.
 
----
+*Fix:* Removed `tasks` from `Scheduler.__init__`. The scheduler now gets tasks from `owner.get_tasks()` at plan-generation time, so there is one source of truth.
 
-## 3. AI Collaboration
+**2. `Plan.explain()` had no data to explain.**
+The original `Plan` only stored `scheduled_tasks` and `skipped_tasks`. `explain()` would have had no way to communicate *why* a task was chosen or skipped — just that it was.
 
-**a. How you used AI**
-
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
-
-**b. Judgment and verification**
-
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
-
----
-
-## 4. Testing and Verification
-
-**a. What you tested**
-
-- What behaviors did you test?
-- Why were these tests important?
-
-**b. Confidence**
-
-- How confident are you that your scheduler works correctly?
-- What edge cases would you test next if you had more time?
-
----
-
-## 5. Reflection
-
-**a. What went well**
-
-- What part of this project are you most satisfied with?
-
-**b. What you would improve**
-
-- If you had another iteration, what would you improve or redesign?
-
-**c. Key takeaway**
-
-- What is one important thing you learned about designing systems or working with AI on this project?
+*Fix:* Added a `reasons: dict[str, str]` field to `Plan`. The scheduler will populate this when building the plan (e.g., `"Morning walk": "high priority, fits in time budget"`), giving `explain()` real content to work with.

@@ -39,6 +39,7 @@ class Plan:
     scheduled_tasks: list[Task] = field(default_factory=list)
     total_minutes: int = 0
     skipped_tasks: list[Task] = field(default_factory=list)
+    reasons: dict[str, str] = field(default_factory=dict)  # task title -> reason chosen/skipped
 
     def explain(self) -> str:
         pass
@@ -48,10 +49,9 @@ class Plan:
 
 
 class Scheduler:
-    def __init__(self, owner: Owner, pet: Pet, tasks: list[Task] = None):
+    def __init__(self, owner: Owner, pet: Pet):
         self.owner = owner
         self.pet = pet
-        self.tasks = tasks or []
 
     def generate_plan(self) -> Plan:
         pass
